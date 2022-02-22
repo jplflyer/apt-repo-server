@@ -1,22 +1,30 @@
-APT-REPO-SERVER
-=========================
+# APT-REPO-SERVER
 
 apt-repo-server is a debian repository server. It monitors file changing event(inotify), then reproduce index file(Packages.gz) automatically.
 
-Usage
-=======================
+# Building
 
-Run server
+    make image
 
-```
-$ docker run -it -v ${PWD}/data:/data -p 10000:80 dorowu/apt-repo-server
-```
+# Usage
 
-Export a debian package
-```
-$ cp qnap-fix-input_0.1_all.deb  data/dists/trusty/main/binary-amd64/
-```
+## Run server
+    make up
 
+    -or-
+
+    $ docker run -d --name repo -e DISTS="bionic,focal" -v ${PWD}/data:/data -p 10000:80 jplflyer/apt-repo-server
+
+The DISTS environment variable controls the distributions expected. See the instructions for configuring apt-get further below.
+
+## Export a debian package
+    $ cp qnap-fix-input_0.1_all.deb  data/dists/trusty/main/binary-amd64/
+
+In this case, we're dumping into the `trusty` distribution. But the way we show to start it, you might want that to be `bionic` or `focal` or whatever you personally use.
+
+Note that `scan.py` hardcodes the `main` part. You're stuck there unless you update the Python script.
+
+## Structure
 File structure looks like
 ```
 $ tree data/
@@ -56,13 +64,26 @@ Description: QNAP fix
  UNKNOWN
 ```
 
-Update /etc/apt/sources.list
-```
-$ echo deb http://127.0.0.1:10000 trusty main | sudo tee -a /etc/apt/sources.list
-```
+# Configure apt-get
+Update `/etc/apt/sources.list`
 
+    echo deb http://127.0.0.1:10000 trusty main | sudo tee -a /etc/apt/sources.list
 
-License
-==================
+Or create a file in `/etc/apt/sources.list.d`. Files must end in `.list`.
+
+    echo deb http://127.0.0.1:10000 trusty main > /etc/apt/sources.list.d/localhost.list
+
+These set up for using `trusty` as the distribution, which is the original default. But the examples we use actually set up for `bionic` and `focal`, so you might want one of these:
+
+For Ubuntu 18.04:
+
+    echo deb http://127.0.0.1:10000 bionic main > /etc/apt/sources.list.d/localhost.list
+
+For Ubuntu 20.04:
+    echo deb http://127.0.0.1:10000 focal main > /etc/apt/sources.list.d/localhost.list
+
+It just has to match what you did when you started the repo and where you are stuffing your .deb files. Using `bionic` or `focal` or `trusty` is just text, and you can put anything there, as long as they match and make sense.
+
+# License
 
 apt-repo is under the Apache 2.0 license. See the LICENSE file for details.
