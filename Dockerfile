@@ -1,10 +1,11 @@
-FROM ubuntu:14.04.3
-MAINTAINER Doro Wu <fcwu.tw@gmail.com>
+FROM ubuntu:20.04
+MAINTAINER Joe Larson <jpl@showpage.org>
 
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update \
-    && apt-get install -y --force-yes --no-install-recommends dpkg-dev nginx inotify-tools supervisor python-gevent \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends dpkg-dev nginx inotify-tools supervisor python3-gevent \
     && apt-get autoclean \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/*
