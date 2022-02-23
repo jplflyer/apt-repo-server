@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+#
+# This should be run with a current working directory of /data.
+# It expects input from env vars DISTS and ARCHS, and assumes default
+# values of "trusty" and "amd64,i386" respectively, comma-delimited.
+#
+# This isn't that great an implementation. It rewrites the Packages.gz file
+# regardless of changes. Thus, it's possible that the file will be empty
+# or incomplete when someone retrieves it.
+#
 
 import subprocess as sp
 from gevent.queue import Queue
@@ -24,10 +33,11 @@ def do_scan():
     info('Scanning...')
     for dist in os.getenv('DISTS', 'trusty').split(','):
         for arch in os.getenv('ARCHS', 'amd64,i386').split(','):
+            relative_path = 'dists/{}/main/binary-{}'.format(dist, arch)
             path = '/data/dists/{}/main/binary-{}'.format(dist, arch)
             if not os.path.exists(path):
                 os.makedirs(path)
-            cmd = 'dpkg-scanpackages -m . | gzip -9c > {0}/Packages.gz'.format(path)
+            cmd = 'dpkg-scanpackages -m {0} | gzip -9c > {1}/Packages.gz'.format(relative_path, path)
             sp.check_call(cmd, shell=True, close_fds=True)
     info('Scanning...done')
 
@@ -70,7 +80,8 @@ def main():
     p = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, close_fds=True)
     t = spawn(loop)
 
-    timeout = 1
+    # This was 1-second, which is kind of insane.
+    timeout = 10
     while True:
         try:
             msg = queue.get(True, timeout)
